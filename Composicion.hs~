@@ -1,0 +1,78 @@
+module Composicion where
+
+import Musica
+import Funciones
+
+type Composicion = [Notas]
+type Melodia = Musica Tono
+
+data Notas = Notas { 
+                      nTiempo :: Tiempo,
+                      nInstr  :: NombreInstr,
+                      nTono   :: TonoAbs,
+                      nDur    :: Tiempo,
+                      nVol    :: Volumen
+                   }
+         deriving (Show,Eq,Ord)
+
+type Tiempo  = Rational
+type Volumen = Int -- de 0 a 127 en MIDI
+
+data Entorno = Entorno {
+                         eTiempo :: Tiempo,
+                         eInstr  :: NombreInstr,
+                         eDur    :: Tiempo,
+                         eKey    :: TonoAbs,
+                         eVol    :: Volumen
+                       }
+         deriving Show
+
+defEnt :: Entorno
+defEnt = Entorno 0 AcousticGuitarSteel (tap 120 nn) 0 127
+
+tap :: Int -> Dur -> Tiempo
+tap s d = 60 / (fromIntegral s * d)
+
+-- Funcion tocarNota
+
+tocarNota :: Entorno -> Dur -> Tono -> Composicion
+tocarNota (Entorno eT eI eD eK eV) d (t,o) = 
+                    let nota1 = Notas eT eI (tonoAbs (t,o) + eK) (d*eD) eV
+                    in [nota1]
+
+-- Funcion escuchar
+escuchar :: Melodia -> Composicion
+escuchar = fst . (escuchar' defEnt)
+
+escuchar' :: Entorno -> Melodia -> (Composicion, Tiempo)
+escuchar' ent@(Entorno eT eI eD eK eV) m = 
+                       case m of
+                          (Prim (Silencio d)) -> ([], d*eD)
+                          (Prim (Nota d t))   -> (tocarNota ent d t, d*eD)
+                          (m1 :+: m2)         -> let (c1,t1) = escuchar' ent m1
+                                                     (c2,t2) = escuchar' (ent {eTiempo = eT + t1}) m2
+                                                 in (c1++c2, t1+t2)
+                          (m1 :=: m2)         -> let (c1,t1) = escuchar' ent m1
+                                                     (c2,t2) = escuchar' ent m2
+                                                 in (merge c1 c2, max t1 t2)
+                          (Instr i m)         -> escuchar' (ent {eInstr = i}) m
+
+merge :: Composicion -> Composicion -> Composicion
+merge [] xs = xs
+merge xs [] = xs
+merge (x:xs) (y:ys) = case nTiempo x < nTiempo y of
+                                True -> x : merge xs (y:ys)
+                                _    -> y : merge (x:xs) ys                
+
+
+type Banda = [(NombreInstr,Melodia)] 
+
+componerBanda :: Banda -> Composicion
+componerBanda  = escuchar . joinBanda
+
+joinBanda :: Banda -> Melodia
+joinBanda []              = silen 0
+joinBanda ((instr,ms):xs) = (Instr instr ms) :=: joinBanda xs
+
+
+

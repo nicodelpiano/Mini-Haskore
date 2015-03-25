@@ -1,0 +1,142 @@
+module Musica where
+
+infixr 5 :+:, :=:
+
+data Primitiva a = Nota Dur a | Silencio Dur
+			deriving Show
+
+data Musica a = Prim (Primitiva a) | Musica a :=: Musica a | Musica a :+: Musica a | Instr NombreInstr (Musica a)
+                        deriving Show
+
+data NombreInstr =
+     AcousticGrandPiano     | BrightAcousticPiano    | ElectricGrandPiano
+  |  HonkyTonkPiano         | RhodesPiano            | ChorusedPiano
+  |  Harpsichord            | Clavinet               | Celesta 
+  |  Glockenspiel           | MusicBox               | Vibraphone  
+  |  Marimba                | Xylophone              | TubularBells
+  |  Dulcimer               | HammondOrgan           | PercussiveOrgan 
+  |  RockOrgan              | ChurchOrgan            | ReedOrgan
+  |  Accordion              | Harmonica              | TangoAccordion
+  |  AcousticGuitarNylon    | AcousticGuitarSteel    | ElectricGuitarJazz
+  |  ElectricGuitarClean    | ElectricGuitarMuted    | OverdrivenGuitar
+  |  DistortionGuitar       | GuitarHarmonics        | AcousticBass
+  |  ElectricBassFingered   | ElectricBassPicked     | FretlessBass
+  |  SlapBass1              | SlapBass2              | SynthBass1   
+  |  SynthBass2             | Violin                 | Viola  
+  |  Cello                  | Contrabass             | TremoloStrings
+  |  PizzicatoStrings       | OrchestralHarp         | Timpani
+  |  StringEnsemble1        | StringEnsemble2        | SynthStrings1
+  |  SynthStrings2          | ChoirAahs              | VoiceOohs
+  |  SynthVoice             | OrchestraHit           | Trumpet
+  |  Trombone               | Tuba                   | MutedTrumpet
+  |  FrenchHorn             | BrassSection           | SynthBrass1
+  |  SynthBrass2            | SopranoSax             | AltoSax 
+  |  TenorSax               | BaritoneSax            | Oboe  
+  |  Bassoon                | EnglishHorn            | Clarinet
+  |  Piccolo                | Flute                  | Recorder
+  |  PanFlute               | BlownBottle            | Shakuhachi
+  |  Whistle                | Ocarina                | Lead1Square
+  |  Lead2Sawtooth          | Lead3Calliope          | Lead4Chiff
+  |  Lead5Charang           | Lead6Voice             | Lead7Fifths
+  |  Lead8BassLead          | Pad1NewAge             | Pad2Warm
+  |  Pad3Polysynth          | Pad4Choir              | Pad5Bowed
+  |  Pad6Metallic           | Pad7Halo               | Pad8Sweep
+  |  FX1Train               | FX2Soundtrack          | FX3Crystal
+  |  FX4Atmosphere          | FX5Brightness          | FX6Goblins
+  |  FX7Echoes              | FX8SciFi               | Sitar
+  |  Banjo                  | Shamisen               | Koto
+  |  Kalimba                | Bagpipe                | Fiddle 
+  |  Shanai                 | TinkleBell             | Agogo  
+  |  SteelDrums             | Woodblock              | TaikoDrum
+  |  MelodicDrum            | SynthDrum              | ReverseCymbal
+  |  GuitarFretNoise        | BreathNoise            | Seashore
+  |  BirdTweet              | TelephoneRing          | Helicopter
+  |  Applause               | Gunshot                | Percussion
+  |  Custom String
+
+  deriving (Show, Eq, Ord)
+
+type Tono = (ClaseTono,Octava)
+
+type Octava = Int
+
+type Dur = Rational
+
+data ClaseTono = 
+              Dob | Do | DoS | Reb | Re | ReS 
+            | Mib | Mi | MiS | Fab | Fa | FaS 
+            |Solb | Sol | SolS | Lab | La | LaS
+            | Sib | Si | SiS
+                        deriving (Show,Eq,Ord)
+
+nota :: Dur -> a -> Musica a
+nota d p = Prim (Nota d p)
+
+silen :: Dur -> Musica a
+silen d = Prim (Silencio d)
+
+dob,doo,dos,reb,re,res,mib,mi,mis,fab,fa,fas,solb,sol,sols,
+	lab,la,las,sib,si,sis :: Octava -> Dur -> Musica Tono
+
+dob  o d = nota d (Dob,  o);  doo  o d = nota d (Do,   o)
+dos  o d = nota d (DoS,  o);  reb  o d = nota d (Reb,  o)
+re   o d = nota d (Re,   o);  res  o d = nota d (ReS,  o)
+mib  o d = nota d (Mib,  o);  mi   o d = nota d (Mi,   o)
+mis  o d = nota d (MiS,  o);  fab  o d = nota d (Fab,  o)
+fa   o d = nota d (Fa,   o);  fas  o d = nota d (FaS,  o)
+solb o d = nota d (Solb, o);  sol  o d = nota d (Sol,  o)
+sols o d = nota d (SolS, o);  lab  o d = nota d (Lab,  o)
+la   o d = nota d (La,   o);  las  o d = nota d (LaS,  o)
+sib  o d = nota d (Sib,  o);  si   o d = nota d (Si,   o)
+sis  o d = nota d (SiS,  o)
+
+nc, nr, nb, nn, co, sc, fu, sf, nrp, nbp, nnp, ncp, 
+    nsp, nfp, nndp, ncdp, nsdp :: Dur
+
+ncs, nrs, nbs, nns, cos, scs, fus, sfs, nrps, nbps,
+    nnps, ncps, nsps, nfps, nndps, ncdps, nsdps :: Musica Tono
+
+nc    = 2;     ncs    = silen nc    -- nota cuadrada
+nr    = 1;     nrs    = silen nr    -- nota redonda
+nb    = 1/2;   nbs    = silen nb    -- nota blanca
+nn    = 1/4;   nns    = silen nn    -- nota negra
+co    = 1/8;   cos    = silen co    -- nota corchea
+sc    = 1/16;  scs    = silen sc    -- nota semicorchea
+fu    = 1/32;  fus    = silen fu    -- nota fusa
+sf    = 1/64;  sfs    = silen sf    -- nota semifusa
+
+nrp   = 3/2;   nrps   = silen nrp   -- duracion nota redonda con puntillo y su respectivo silencio
+nbp   = 3/4;   nbps   = silen nbp   -- nota blanca con puntillo y silencio
+nnp   = 3/8;   nnps   = silen nnp   -- nota negra con puntillo y silencio
+ncp   = 3/16;  ncps   = silen ncp   -- nota corchea con puntillo y silencio
+nsp   = 3/32;  nsps   = silen nsp   -- nota semicorchea con puntillo y silencio
+nfp   = 3/64;  nfps   = silen nfp   -- nota fusa con puntillo y silencio
+
+nndp  = 7/8;   nndps  = silen nndp  -- nota negra con doble puntillo y silencio
+ncdp  = 7/16;  ncdps  = silen ncdp  -- nota corchea con doble puntillo y silencio
+nsdp  = 7/32;  nsdps  = silen nsdp  -- nota semicorchea con doble puntillo y silencio
+
+type TonoAbs = Int
+
+tonoAbs           :: Tono -> TonoAbs
+tonoAbs (t,o)  = 12*o + tonoAInt t
+
+tonoAInt     :: ClaseTono -> Int
+tonoAInt ct  = case ct of
+  Dob  -> -1;  Do  -> 0;   DoS  -> 1;
+  Reb -> 1;   Re  -> 2;   ReS  -> 3;
+  Mib  -> 3;   Mi  -> 4;   MiS -> 5;
+  Fab  -> 4;   Fa  -> 5;   FaS  -> 6; 
+  Solb  -> 6;   Sol  -> 7;   SolS  -> 8;
+  Lab  -> 8;   La  -> 9;   LaS -> 10;
+  Sib  -> 10;  Si  -> 11;  SiS  -> 12;
+
+aTono     :: TonoAbs -> Tono
+aTono ta  = 
+    let (o, n) = divMod ta 12
+    in  ([Do,DoS,Re,ReS,Mi,Fa,FaS,Sol,SolS,La,LaS,Si] !! n, o)
+
+trans      :: Int -> Tono -> Tono
+trans i p  = aTono (tonoAbs p + i)
+
+

@@ -1,0 +1,54 @@
+module Guitarra where
+
+import Musica
+import Tiempos
+import Funciones
+import Composicion
+import ToMidi
+
+data Guitarra = Guitarra {
+                          gAfin :: Afinacion,
+                          gNCue :: Cuerda,
+                          gNTra :: Traste,
+                          gTipo :: TipoGuitarra
+                         }
+
+type Cuerda = Int -- Rango de 1 a 6 por default
+type Traste = Int -- Rango de 0 a 24 por default
+type Afinacion = [ClaseTono]
+
+data TipoGuitarra = Electrica | ElectricaLimpio | Acustica 
+
+af440 :: Afinacion
+af440 = [Mi,Si,Sol,Re,La,Mi]
+
+mapGI :: TipoGuitarra -> NombreInstr
+mapGI tg = case tg of
+             Electrica         -> DistortionGuitar
+             Acustica          -> AcousticGuitarSteel
+             ElectricaLimpio   -> ElectricGuitarClean
+
+defGuitar :: Guitarra
+defGuitar = Guitarra af440 6 24 Electrica
+
+sonarCuerda :: Cuerda -> Traste -> Dur -> IO ()
+sonarCuerda c t d = play (tocarCuerda c t d defGuitar)
+
+tocarCuerda :: Cuerda -> Traste -> Dur -> Guitarra -> Melodia 
+tocarCuerda c t d g = case g of
+                        (Guitarra af nc ntras tipo) -> let ct         = tonoAInt (af!!(c-1)) + t
+                                                           (tono,oct) = aTono ct
+                                                       in (Instr (mapGI tipo) (nota d (tono,oct+4)))
+                        --_                           -> silen 0
+                             
+
+tocarAcorde :: [(Cuerda,Traste,Dur)] -> Guitarra -> IO ()
+tocarAcorde xs g = play acordeGui xs g
+
+lineaGui :: [(Cuerda,Traste,Dur)] -> Guitarra -> Melodia
+lineaGui []           g = silen 0
+lineaGui ((c,t,d):xs) g = tocarCuerda c t d g :+: lineaGui xs g
+
+acordeGui :: [(Cuerda,Traste,Dur)] -> Guitarra -> Melodia
+acordeGui []           g = silen 0
+acordeGui ((c,t,d):xs) g = tocarCuerda c t d g :=: acordeGui xs g
